@@ -1,11 +1,11 @@
+import type { Ref, ShallowRef } from 'vue';
+import { onBeforeUnmount, shallowRef, watch, watchEffect } from 'vue';
+import type { CacheKeyType } from '../Cache';
 import { useStyleInject } from '../StyleContext';
-import type { KeyType } from '../Cache';
 import useHMR from './useHMR';
-import type { ShallowRef, Ref } from 'vue';
-import { onBeforeUnmount, watch, watchEffect, shallowRef } from 'vue';
 export default function useClientCache<CacheType>(
   prefix: string,
-  keyPath: Ref<KeyType[]>,
+  keyPath: Ref<CacheKeyType[]>,
   cacheFn: () => CacheType,
   onCacheRemove?: (cache: CacheType, fromHMR: boolean) => void,
 ): ShallowRef<CacheType> {

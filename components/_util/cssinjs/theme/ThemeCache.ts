@@ -204,7 +204,7 @@ this.cache = Map {
   funcA => {
     map: Map {
       funcB => {
-        value: [derivedTheme, 访问时间]
+        value: [derivedTheme, 访问次序]
       }
     }
   }
@@ -279,5 +279,5 @@ cache
         └── funcB
             └── map
                 └── funcC
-                    └── value: [theme, 访问时间]
+                    └── value: [theme, 访问次序]
 */

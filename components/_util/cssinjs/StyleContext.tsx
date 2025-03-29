@@ -20,36 +20,47 @@ export const ATTR_CACHE_PATH = 'data-cache-path';
 // Mark css-in-js instance in style element
 export const CSS_IN_JS_INSTANCE = '__cssinjs_instance__';
 
+/**
+ * @description Create a cache instance with random cssinjsInstanceId
+ * Before creation, it will try to move all style elements to the `<head>` and ensure their uniqueness
+ * @export
+ * @returns CacheEntity
+ */
 export function createCache() {
   const cssinjsInstanceId = Math.random().toString(12).slice(2);
 
   // Tricky SSR: Move all inline style to the head.
   // PS: We do not recommend tricky mode.
   if (typeof document !== 'undefined' && document.head && document.body) {
-    const styles = document.body.querySelectorAll(`style[${ATTR_MARK}]`) || [];
+    const styleElementsInBody = document.body.querySelectorAll(`style[${ATTR_MARK}]`) || [];
+    const styleElementsInDocument = document.querySelectorAll(`style[${ATTR_MARK}]`) || [];
     const { firstChild } = document.head;
+    console.log('StyleContext createCache', {
+      firstChild,
+      styleElementsInBody,
+      styleElementsInDocument,
+    });
 
-    Array.from(styles).forEach(style => {
+    // Move all styleElementsInBody style to the head
+    Array.from(styleElementsInBody).forEach(style => {
       (style as any)[CSS_IN_JS_INSTANCE] = (style as any)[CSS_IN_JS_INSTANCE] || cssinjsInstanceId;
-
-      // Not force move if no head
       // Not force move if no head
       if ((style as any)[CSS_IN_JS_INSTANCE] === cssinjsInstanceId) {
         document.head.insertBefore(style, firstChild);
       }
     });
 
-    // Deduplicate of moved styles
-    const styleHash: Record<string, boolean> = {};
-    Array.from(document.querySelectorAll(`style[${ATTR_MARK}]`)).forEach(style => {
-      const hash = style.getAttribute(ATTR_MARK)!;
-      // when here are some style elements with same value of attribute  ATTR_MARK
-      if (styleHash[hash]) {
-        if ((style as any)[CSS_IN_JS_INSTANCE] === cssinjsInstanceId) {
-          style.parentNode?.removeChild(style);
+    // Deduplicate of moved style elements
+    const styleElementHashRecord: Record<string, boolean> = {};
+    Array.from(styleElementsInDocument).forEach(styleElement => {
+      const hash = styleElement.getAttribute(ATTR_MARK)!;
+      // when here are some styleElement elements with same value of attribute  ATTR_MARK
+      if (styleElementHashRecord[hash]) {
+        if ((styleElement as any)[CSS_IN_JS_INSTANCE] === cssinjsInstanceId) {
+          styleElement.parentNode?.removeChild(styleElement);
         }
       } else {
-        styleHash[hash] = true;
+        styleElementHashRecord[hash] = true;
       }
     });
   }
@@ -70,13 +81,20 @@ export interface StyleContextProps {
   cache: CacheEntity;
   /** Tell children that this context is default generated context */
   defaultCache: boolean;
-  /** Use `:where` selector to reduce hashId css selector priority */
+  /**
+   * Use `:where` selector to reduce hashId css selector priority
+   * Config `hashPriority` to `high` instead of default `low`, which will remove `:where` wrapper
+   * hashPriority not support dynamic update, you can reload for new value
+   */
   hashPriority?: HashPriority;
   /** Tell cssinjs where to inject style in */
   container?: Element | ShadowRoot;
   /** Component wil render inline  `<style />` for fallback in SSR. Not recommend. */
   ssrInline?: boolean;
-  /** Transform css before inject in document. Please note that `transformers` do not support dynamic update */
+  /** Transform css before inject in document.
+   * If you need to be compatible with older browsers, you can configure transformers through the StyleProvider of @ant-design/cssinjs
+   * Please note that `transformers` do not support dynamic update
+   */
   transformers?: Transformer[];
   /**
    * Linters to lint css before inject in document.
@@ -91,21 +109,34 @@ const StyleContextKey: InjectionKey<ShallowRef<Partial<StyleContextProps>>> =
 
 export type UseStyleProviderProps = Partial<StyleContextProps> | Ref<Partial<StyleContextProps>>;
 
-// fix: https://github.com/vueComponent/ant-design-vue/issues/7023
-const getCache = () => {
+/**
+ * @description Retrieves the CSS-in-JS cache entity for the current application instance.
+ * If the cache entity already exists in the global properties of the application context, it is returned directly.
+ * If not, a new cache entity is created and attached to the global properties of the application context.
+ * @see {@link https://github.com/vueComponent/ant-design-vue/issues/7023|issues/7023}
+ * @returns {CacheEntity} The CSS-in-JS cache entity for the current application instance.
+ */
+const getAppContextStyleCache = (): CacheEntity => {
   const instance = getCurrentInstance();
   let cache: CacheEntity;
+
+  // Check if the current instance and its application context exist
   if (instance && instance.appContext) {
     const globalCache = instance.appContext?.config?.globalProperties?.__ANTDV_CSSINJS_CACHE__;
+
+    // If a global cache exists, use it directly
     if (globalCache) {
       cache = globalCache;
     } else {
+      // Otherwise, create a new cache entity and attach it to the global properties
       cache = createCache();
       if (instance.appContext.config.globalProperties) {
+        // Ensure only one cache entity exists per application context
         instance.appContext.config.globalProperties.__ANTDV_CSSINJS_CACHE__ = cache;
       }
     }
   } else {
+    // If no instance or application context is available, create a new cache entity
     cache = createCache();
   }
   return cache;
@@ -117,27 +148,46 @@ const defaultStyleContext: StyleContextProps = {
   hashPriority: 'low',
 };
 // fix: https://github.com/vueComponent/ant-design-vue/issues/6912
-export const useStyleInject = () => {
-  const cache = getCache();
-  return inject(StyleContextKey, shallowRef({ ...defaultStyleContext, cache }));
+
+/**
+ * @description Hook for injecting styles into the Vue component.
+ * This function is used to inject the style context into a Vue component and returns a shallow reference containing the default style context and a cache object.
+ * @see {@link https://github.com/vueComponent/ant-design-vue/issues/6912|issues/6912}
+ * @returns {ShallowRef<Partial<StyleContextProps>>} Returns a shallow reference containing the default style context and a cache object.
+ * This reference can be accessed in the component via the `inject` method and is used to manage the global state of styles.
+ */
+export const useStyleInject = (): ShallowRef<Partial<StyleContextProps>> => {
+  // Retrieve the style cache from the application context
+  const appContextStyleCache = getAppContextStyleCache();
+
+  // Inject the style context and return a shallow reference containing the default style context and the cache object
+  return inject(
+    StyleContextKey,
+    shallowRef({
+      ...defaultStyleContext,
+      // https://github.com/vueComponent/ant-design-vue/issues/6912
+      cache: appContextStyleCache,
+    }),
+  );
 };
 export const useStyleProvider = (props: UseStyleProviderProps) => {
   const parentContext = useStyleInject();
   const context = shallowRef<Partial<StyleContextProps>>({
     ...defaultStyleContext,
+    // https://github.com/vueComponent/ant-design-vue/issues/6912
     cache: createCache(),
   });
   watch(
     [() => unref(props), parentContext],
     () => {
-      const mergedContext: Partial<StyleContextProps> = {
+      const mergedContext: any = {
         ...parentContext.value,
       };
       const propsValue = unref(props);
       keysOf(propsValue).forEach(key => {
         const value = propsValue[key];
         if (value !== undefined) {
-          mergedContext[key] = value as any;
+          mergedContext[key] = value;
         }
       });
 
