@@ -1,5 +1,5 @@
 import warning from '../../warning';
-import type { DerivativeFunc, TokenType } from './interface';
+import type { DerivativeFunc, TokenType } from './types';
 
 let uuid = 0;
 

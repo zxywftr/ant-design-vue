@@ -1,5 +1,5 @@
 import devWarning from '../../../vc-util/warning';
-import type { LinterInfo } from './interface';
+import type { LinterInfo } from './types';
 
 export function lintWarning(message: string, info: LinterInfo) {
   const { path, parentSelectors } = info;

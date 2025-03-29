@@ -1,17 +1,18 @@
-import type { ShallowRef, ExtractPropTypes, InjectionKey, Ref } from 'vue';
+import type { InjectionKey, PropType, Ref, ShallowRef } from 'vue';
 import {
-  provide,
   defineComponent,
-  unref,
-  inject,
-  watch,
-  shallowRef,
   getCurrentInstance,
+  inject,
+  provide,
+  shallowRef,
+  unref,
+  watch,
 } from 'vue';
+import { keysOf } from '../object';
+import { withInstall } from '../type';
 import CacheEntity from './Cache';
-import type { Linter } from './linters/interface';
+import type { Linter } from './linters/types';
 import type { Transformer } from './transformers/interface';
-import { arrayType, booleanType, objectType, someType, stringType, withInstall } from '../type';
 export const ATTR_TOKEN = 'data-token-hash';
 export const ATTR_MARK = 'data-css-hash';
 export const ATTR_CACHE_PATH = 'data-cache-path';
@@ -42,6 +43,7 @@ export function createCache() {
     const styleHash: Record<string, boolean> = {};
     Array.from(document.querySelectorAll(`style[${ATTR_MARK}]`)).forEach(style => {
       const hash = style.getAttribute(ATTR_MARK)!;
+      // when here are some style elements with same value of attribute  ATTR_MARK
       if (styleHash[hash]) {
         if ((style as any)[CSS_IN_JS_INSTANCE] === cssinjsInstanceId) {
           style.parentNode?.removeChild(style);
@@ -132,10 +134,10 @@ export const useStyleProvider = (props: UseStyleProviderProps) => {
         ...parentContext.value,
       };
       const propsValue = unref(props);
-      Object.keys(propsValue).forEach(key => {
+      keysOf(propsValue).forEach(key => {
         const value = propsValue[key];
-        if (propsValue[key] !== undefined) {
-          mergedContext[key] = value;
+        if (value !== undefined) {
+          mergedContext[key] = value as any;
         }
       });
 
@@ -149,43 +151,31 @@ export const useStyleProvider = (props: UseStyleProviderProps) => {
   provide(StyleContextKey, context);
   return context;
 };
-export const styleProviderProps = () => ({
-  autoClear: booleanType(),
-  /** @private Test only. Not work in production. */
-  mock: stringType<'server' | 'client'>(),
-  /**
-   * Only set when you need ssr to extract style on you own.
-   * If not provided, it will auto create <style /> on the end of Provider in server side.
-   */
-  cache: objectType<CacheEntity>(),
-  /** Tell children that this context is default generated context */
-  defaultCache: booleanType(),
-  /** Use `:where` selector to reduce hashId css selector priority */
-  hashPriority: stringType<HashPriority>(),
-  /** Tell cssinjs where to inject style in */
-  container: someType<Element | ShadowRoot>(),
-  /** Component wil render inline  `<style />` for fallback in SSR. Not recommend. */
-  ssrInline: booleanType(),
-  /** Transform css before inject in document. Please note that `transformers` do not support dynamic update */
-  transformers: arrayType<Transformer[]>(),
-  /**
-   * Linters to lint css before inject in document.
-   * Styles will be linted after transforming.
-   * Please note that `linters` do not support dynamic update.
-   */
-  linters: arrayType<Linter[]>(),
-});
-export type StyleProviderProps = Partial<ExtractPropTypes<ReturnType<typeof styleProviderProps>>>;
+
+// =========================== Style Provider ===========================
+export type StyleProviderProps = StyleContextProps;
 export const StyleProvider = withInstall(
-  defineComponent({
-    name: 'AStyleProvider',
-    inheritAttrs: false,
-    props: styleProviderProps(),
-    setup(props, { slots }) {
+  defineComponent(
+    (props, { slots }) => {
       useStyleProvider(props);
       return () => slots.default?.();
     },
-  }),
+    {
+      name: 'AStyleProvider',
+      inheritAttrs: false,
+      props: {
+        autoClear: Boolean,
+        mock: String as PropType<'server' | 'client'>,
+        cache: Object as PropType<CacheEntity>,
+        defaultCache: Boolean,
+        hashPriority: String as PropType<HashPriority>,
+        container: Object as PropType<Element | ShadowRoot>,
+        ssrInline: Boolean,
+        transformers: Array as PropType<Transformer[]>,
+        linters: Array as PropType<Linter[]>,
+      },
+    },
+  ),
 );
 
 export default {
