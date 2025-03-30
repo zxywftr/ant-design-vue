@@ -1,9 +1,9 @@
-import canUseDom from './canUseDom';
+import { isClientSide } from './is';
 
-export const canUseDocElement = () => canUseDom() && window.document.documentElement;
+export const canUseDocElement = () => isClientSide() && window.document.documentElement;
 
 const isStyleNameSupport = (styleName: string | string[]): boolean => {
-  if (canUseDom() && window.document.documentElement) {
+  if (isClientSide() && window.document.documentElement) {
     const styleNameList = Array.isArray(styleName) ? styleName : [styleName];
     const { documentElement } = window.document;
 

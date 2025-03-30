@@ -1,10 +1,10 @@
 import { ref } from 'vue';
-import canUseDom from '../../_util/canUseDom';
+import { isClientSide } from '../../_util/is';
 
 let uuid = 0;
 
 /** Is client side and not jsdom */
-export const isBrowserClient = process.env.NODE_ENV !== 'test' && canUseDom();
+export const isBrowserClient = process.env.NODE_ENV !== 'test' && isClientSide();
 
 /** Get unique id for accessibility usage */
 export function getUUID(): number | string {

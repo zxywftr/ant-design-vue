@@ -1,8 +1,8 @@
 import type { Ref } from 'vue';
 import { computed, watchEffect } from 'vue';
-import { updateCSS, removeCSS } from '../../vc-util/Dom/dynamicCSS';
 import getScrollBarSize from '../../_util/getScrollBarSize';
-import canUseDom from '../../_util/canUseDom';
+import { isClientSide } from '../../_util/is';
+import { removeCSS, updateCSS } from '../../vc-util/Dom/dynamicCSS';
 
 const UNIQUE_ID = `vc-util-locker-${Date.now()}`;
 
@@ -25,7 +25,7 @@ export default function useScrollLocker(lock?: Ref<boolean>) {
 
   watchEffect(
     onClear => {
-      if (!canUseDom()) {
+      if (!isClientSide()) {
         return;
       }
       if (mergedLock.value) {

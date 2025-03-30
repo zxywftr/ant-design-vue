@@ -1,4 +1,4 @@
-import canUseDom from '../../../../_util/canUseDom';
+import { isClientSide } from '../../../is';
 import { ATTR_MARK } from '../../StyleContext';
 
 export const ATTR_CACHE_MAP = 'data-ant-cssinjs-cache-path';
@@ -33,7 +33,7 @@ export function prepare() {
   if (!cachePathMap) {
     cachePathMap = {};
 
-    if (canUseDom()) {
+    if (isClientSide()) {
       const div = document.createElement('div');
       div.className = ATTR_CACHE_MAP;
       div.style.position = 'fixed';
@@ -72,7 +72,7 @@ export function getStyleAndHash(path: string): [style: string | null, hash: stri
   const hash = cachePathMap[path];
   let styleStr: string | null = null;
 
-  if (hash && canUseDom()) {
+  if (hash && isClientSide()) {
     if (fromCSSFile) {
       styleStr = CSS_FILE_STYLE;
     } else {

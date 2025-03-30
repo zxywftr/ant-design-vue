@@ -1,11 +1,11 @@
-import json2mq from '../_util/json2mq';
-import BaseMixin from '../_util/BaseMixin';
-import { cloneElement } from '../_util/vnode';
-import InnerSlider from './inner-slider';
-import defaultProps from './default-props';
-import { canUseDOM } from './utils/innerSliderUtils';
-import { getSlot } from '../_util/props-util';
 import { defineComponent } from 'vue';
+import BaseMixin from '../_util/BaseMixin';
+import { isClientSide } from '../_util/is';
+import json2mq from '../_util/json2mq';
+import { getSlot } from '../_util/props-util';
+import { cloneElement } from '../_util/vnode';
+import defaultProps from './default-props';
+import InnerSlider from './inner-slider';
 
 export default defineComponent({
   name: 'Slider',
@@ -39,7 +39,7 @@ export default defineComponent({
           });
         }
         // when not using server side rendering
-        canUseDOM() &&
+        isClientSide() &&
           this.media(bQuery, () => {
             this.setState({ breakpoint });
           });
@@ -49,7 +49,7 @@ export default defineComponent({
       // convert javascript object to media query string
       const query = json2mq({ minWidth: breakpoints.slice(-1)[0] });
 
-      canUseDOM() &&
+      isClientSide() &&
         this.media(query, () => {
           this.setState({ breakpoint: null });
         });

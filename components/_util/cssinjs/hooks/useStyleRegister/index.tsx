@@ -3,26 +3,26 @@ import type * as CSS from 'csstype';
 // @ts-ignore
 import unitless from '@emotion/unitless';
 import { compile, serialize, stringify } from 'stylis';
+import type { Ref } from 'vue';
+import { computed } from 'vue';
 import type { Theme, Transformer } from '../..';
+import { isClientSide } from '../../../../_util/is';
+import { removeCSS, updateCSS } from '../../../../vc-util/Dom/dynamicCSS';
+import type { VueNode } from '../../../type';
 import type Cache from '../../Cache';
 import type Keyframes from '../../Keyframes';
 import type { Linter } from '../../linters';
 import { contentQuotesLinter, hashedAnimationLinter } from '../../linters';
 import type { HashPriority } from '../../StyleContext';
 import {
-  useStyleInject,
   ATTR_CACHE_PATH,
   ATTR_MARK,
   ATTR_TOKEN,
   CSS_IN_JS_INSTANCE,
+  useStyleInject,
 } from '../../StyleContext';
 import { supportLayer } from '../../util';
 import useGlobalCache from '../useGlobalCache';
-import { removeCSS, updateCSS } from '../../../../vc-util/Dom/dynamicCSS';
-import type { Ref } from 'vue';
-import { computed } from 'vue';
-import type { VueNode } from '../../../type';
-import canUseDom from '../../../../_util/canUseDom';
 
 import {
   ATTR_CACHE_MAP,
@@ -31,7 +31,7 @@ import {
   serialize as serializeCacheMap,
 } from './cacheMapUtil';
 
-const isClientSide = canUseDom();
+const isInClientSide = isClientSide();
 
 const SKIP_CHECK = '_skip_check_';
 const MULTI_VALUE = '_multi_value_';
@@ -331,7 +331,7 @@ export default function useStyleRegister(
   const fullPath = computed(() => [tokenKey.value, ...info.value.path]);
 
   // Check if need insert style
-  let isMergedClientSide = isClientSide;
+  let isMergedClientSide = isInClientSide;
   if (process.env.NODE_ENV !== 'production' && styleContext.value.mock !== undefined) {
     isMergedClientSide = styleContext.value.mock === 'client';
   }
@@ -419,7 +419,7 @@ export default function useStyleRegister(
     },
     // Remove cache if no need
     ([, , styleId], fromHMR) => {
-      if ((fromHMR || styleContext.value.autoClear) && isClientSide) {
+      if ((fromHMR || styleContext.value.autoClear) && isInClientSide) {
         removeCSS(styleId, { mark: ATTR_MARK });
       }
     },

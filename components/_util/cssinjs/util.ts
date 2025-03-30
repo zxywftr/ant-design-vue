@@ -1,7 +1,7 @@
 import hash from '@emotion/hash';
 import { removeCSS, updateCSS } from '../../vc-util/Dom/dynamicCSS';
-import canUseDom from '../canUseDom';
 
+import { isClientSide } from '../is';
 import { Theme } from './theme';
 
 // Create a cache here to avoid always loop generate
@@ -46,7 +46,7 @@ function supportSelector(
   handleElement: (ele: HTMLElement) => void,
   supportCheck?: (ele: HTMLElement) => boolean,
 ): boolean {
-  if (canUseDom()) {
+  if (isClientSide()) {
     updateCSS(styleStr, randomSelectorKey);
 
     const ele = document.createElement('div');

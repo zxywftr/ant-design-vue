@@ -1,19 +1,19 @@
-import { defineComponent, ref, computed, watch, onBeforeUnmount, Transition } from 'vue';
 import CloseOutlined from '@ant-design/icons-vue/CloseOutlined';
 import FileTextOutlined from '@ant-design/icons-vue/FileTextOutlined';
+import { computed, defineComponent, onBeforeUnmount, ref, Transition, watch } from 'vue';
 import classNames from '../_util/classNames';
+import { isClientSide } from '../_util/is';
+import { findDOMNode, initDefaultProps } from '../_util/props-util';
 import { getTransitionProps } from '../_util/transition';
-import FloatButton, { floatButtonPrefixCls } from './FloatButton';
 import useConfigInject from '../config-provider/hooks/useConfigInject';
 import { useProvideFloatButtonGroupContext } from './context';
-import { findDOMNode, initDefaultProps } from '../_util/props-util';
-import { floatButtonGroupProps } from './interface';
+import FloatButton, { floatButtonPrefixCls } from './FloatButton';
 import type { FloatButtonGroupProps } from './interface';
-import canUseDom from '../_util/canUseDom';
+import { floatButtonGroupProps } from './interface';
 
 // CSSINJS
-import useStyle from './style';
 import useMergedState from '../_util/hooks/useMergedState';
+import useStyle from './style';
 
 const FloatButtonGroup = defineComponent({
   compatConfig: { MODE: 3 },
@@ -75,7 +75,7 @@ const FloatButtonGroup = defineComponent({
     watch(
       computed(() => props.trigger),
       value => {
-        if (!canUseDom()) {
+        if (!isClientSide()) {
           return;
         }
         document.removeEventListener('click', onClick);

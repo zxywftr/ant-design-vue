@@ -10,3 +10,7 @@ export const isOn = (key: string) => onRE.test(key);
 export const isValid = (value: any): boolean => {
   return value !== undefined && value !== null && value !== '';
 };
+
+export const isClientSide = () => {
+  return !!(typeof window !== 'undefined' && window.document && window.document.createElement);
+};

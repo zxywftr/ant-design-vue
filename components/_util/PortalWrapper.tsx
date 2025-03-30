@@ -1,22 +1,22 @@
-import PropTypes from './vue-types';
-import Portal from './Portal';
 import {
+  computed,
   defineComponent,
+  nextTick,
+  onBeforeUnmount,
+  onMounted,
+  onUpdated,
   shallowRef,
   watch,
-  onMounted,
-  onBeforeUnmount,
-  onUpdated,
-  nextTick,
-  computed,
 } from 'vue';
-import canUseDom from './canUseDom';
+import useScrollLocker from './hooks/useScrollLocker';
+import { isClientSide } from './is';
+import Portal from './Portal';
 import raf from './raf';
 import { booleanType } from './type';
-import useScrollLocker from './hooks/useScrollLocker';
+import PropTypes from './vue-types';
 
 let openCount = 0;
-const supportDom = canUseDom();
+const isInClient = isClientSide();
 
 /** @private Test usage only */
 export function getOpenCount() {
@@ -24,7 +24,7 @@ export function getOpenCount() {
 }
 
 const getParent = (getContainer: GetContainer) => {
-  if (!supportDom) {
+  if (!isInClient) {
     return null;
   }
   if (getContainer) {
@@ -61,7 +61,7 @@ export default defineComponent({
     const componentRef = shallowRef();
     const rafId = shallowRef<number>();
     const triggerUpdate = shallowRef(1);
-    const defaultContainer = canUseDom() && document.createElement('div');
+    const defaultContainer = isClientSide() && document.createElement('div');
     const removeCurrentContainer = () => {
       // Portal will remove from `parentNode`.
       // Let's handle this again to avoid refactor issue.
@@ -85,7 +85,7 @@ export default defineComponent({
       return true;
     };
     const getContainer = () => {
-      if (!supportDom) {
+      if (!isInClient) {
         return null;
       }
       if (!container.value) {
@@ -111,7 +111,7 @@ export default defineComponent({
         return (
           props.autoLock &&
           props.visible &&
-          canUseDom() &&
+          isClientSide() &&
           (container.value === document.body || container.value === defaultContainer)
         );
       }),
@@ -122,7 +122,7 @@ export default defineComponent({
         [() => props.visible, () => props.getContainer],
         ([visible, getContainer], [prevVisible, prevGetContainer]) => {
           // Update count
-          if (supportDom) {
+          if (isInClient) {
             parent = getParent(props.getContainer);
             if (parent === document.body) {
               if (visible && !prevVisible) {
@@ -161,7 +161,7 @@ export default defineComponent({
 
     onBeforeUnmount(() => {
       const { visible } = props;
-      if (supportDom && parent === document.body) {
+      if (isInClient && parent === document.body) {
         // 离开时不会 render， 导到离开时数值不变，改用 func 。。
         openCount = visible && openCount ? openCount - 1 : openCount;
       }

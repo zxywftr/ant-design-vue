@@ -1,4 +1,4 @@
-import canUseDom from '../../_util/canUseDom';
+import { isClientSide } from '../../_util/is';
 import contains from './contains';
 
 const APPEND_ORDER = 'data-vc-order';
@@ -52,7 +52,7 @@ function findStyles(container: ContainerType) {
 }
 
 export function injectCSS(css: string, option: Options = {}) {
-  if (!canUseDom()) {
+  if (!isClientSide()) {
     return null;
   }
 

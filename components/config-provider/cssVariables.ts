@@ -1,11 +1,11 @@
 /* eslint-disable import/prefer-default-export, prefer-destructuring */
 
-import { TinyColor } from '@ctrl/tinycolor';
 import { generate } from '@ant-design/colors';
-import type { Theme } from './context';
-import { updateCSS } from '../vc-util/Dom/dynamicCSS';
-import canUseDom from '../_util/canUseDom';
+import { TinyColor } from '@ctrl/tinycolor';
+import { isClientSide } from '../_util/is';
 import warning from '../_util/warning';
+import { updateCSS } from '../vc-util/Dom/dynamicCSS';
+import type { Theme } from './context';
 
 const dynamicStyleMark = `-ant-${Date.now()}-${Math.random()}`;
 
@@ -95,7 +95,7 @@ export function getStyle(globalPrefixCls: string, theme: Theme) {
 export function registerTheme(globalPrefixCls: string, theme: Theme) {
   const style = getStyle(globalPrefixCls, theme);
 
-  if (canUseDom()) {
+  if (isClientSide()) {
     updateCSS(style, `${dynamicStyleMark}-dynamic-theme`);
   } else {
     warning(false, 'ConfigProvider', 'SSR do not support dynamic theme with css variables.');

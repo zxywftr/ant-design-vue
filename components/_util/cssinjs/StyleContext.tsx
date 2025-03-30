@@ -21,7 +21,7 @@ export const ATTR_CACHE_PATH = 'data-cache-path';
 export const CSS_IN_JS_INSTANCE = '__cssinjs_instance__';
 
 /**
- * @description Create a cache instance with random cssinjsInstanceId
+ * @description Create a cache instance with random cssinjsInstanceId.
  * Before creation, it will try to move all style elements to the `<head>` and ensure their uniqueness
  * @export
  * @returns CacheEntity
@@ -170,16 +170,31 @@ export const useStyleInject = (): ShallowRef<Partial<StyleContextProps>> => {
     }),
   );
 };
+
+/**
+ * @description Provides a style context for Vue components.
+ * This function merges the provided props with the parent context and creates a new context object.
+ * It then provides this context to child components via the `provide` function.
+ *
+ * @param {UseStyleProviderProps} props - The properties that define the style context.
+ * @returns {ShallowRef<Partial<StyleContextProps>>} A shallow reference to the merged style context.
+ */
 export const useStyleProvider = (props: UseStyleProviderProps) => {
+  // Retrieve the parent context using the `useStyleInject` hook.
   const parentContext = useStyleInject();
+
+  // Create a shallow reference for the current context, initializing it with default values and a new cache.
   const context = shallowRef<Partial<StyleContextProps>>({
     ...defaultStyleContext,
     // https://github.com/vueComponent/ant-design-vue/issues/6912
     cache: createCache(),
   });
+
+  // Watch for changes in the provided props and parent context.
   watch(
     [() => unref(props), parentContext],
     () => {
+      // Merge the parent context with the provided props.
       const mergedContext: any = {
         ...parentContext.value,
       };
@@ -191,23 +206,54 @@ export const useStyleProvider = (props: UseStyleProviderProps) => {
         }
       });
 
+      // Update the cache and defaultCache properties based on the provided props.
       const { cache } = propsValue;
       mergedContext.cache = mergedContext.cache || createCache();
       mergedContext.defaultCache = !cache && parentContext.value.defaultCache;
+
+      // Update the current context with the merged context.
       context.value = mergedContext;
     },
     { immediate: true },
   );
+
+  // Provide the current context to child components.
   provide(StyleContextKey, context);
+
+  // Return the current context.
   return context;
 };
-
 // =========================== Style Provider ===========================
 export type StyleProviderProps = StyleContextProps;
+
+/**
+ * @description Provide StyleContext in the form of component.
+ * StyleProvider is a higher-order component that provides style management capabilities.
+ * It is wrapped with `withInstall` to ensure it can be globally installed in a Vue application.
+ * The component is defined using `defineComponent` and utilizes `useStyleProvider` to handle style-related logic.
+ *
+ * @param {Object} props - The props passed to the component.
+ * @param {boolean} props.autoClear - Whether to automatically clear styles when the component is unmounted.
+ * @param {string} props.mock - Specifies the mock environment, either 'server' or 'client'.
+ * @param {Object} props.cache - The cache entity to be used for style management.
+ * @param {boolean} props.defaultCache - Whether to use the default cache.
+ * @param {string} props.hashPriority - The priority of the hash used in style generation.
+ * @param {Object} props.container - The container element or shadow root where styles will be applied.
+ * @param {boolean} props.ssrInline - Whether to inline styles for server-side rendering.
+ * @param {Array} props.transformers - An array of style transformers to be applied.
+ * @param {Array} props.linters - An array of style linters to be applied.
+ * @param {Object} slots - The slots provided to the component.
+ * @param {Function} slots.default - The default slot content to be rendered.
+ *
+ * @returns {Function} A render function that returns the default slot content.
+ */
 export const StyleProvider = withInstall(
   defineComponent(
     (props, { slots }) => {
+      // Initialize style provider with the given props
       useStyleProvider(props);
+
+      // Render the default slot content
       return () => slots.default?.();
     },
     {
