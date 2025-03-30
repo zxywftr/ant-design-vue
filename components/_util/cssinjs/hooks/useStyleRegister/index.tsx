@@ -299,10 +299,6 @@ function uniqueHash(path: (string | number)[], styleStr: string) {
   return hash(`${path.join('%')}${styleStr}`);
 }
 
-// function Empty() {
-//   return null;
-// }
-
 /**
  * Register a style to the global style sheet.
  */
@@ -427,27 +423,6 @@ export default function useStyleRegister(
 
   return (node: VueNode) => {
     return node;
-    // let styleNode: VueNode;
-    // if (!styleContext.ssrInline || isMergedClientSide || !styleContext.defaultCache) {
-    //   styleNode = <Empty />;
-    // } else {
-    //   styleNode = (
-    //     <style
-    //       {...{
-    //         [ATTR_TOKEN]: cacheStyle.value[1],
-    //         [ATTR_MARK]: cacheStyle.value[2],
-    //       }}
-    //       innerHTML={cacheStyle.value[0]}
-    //     />
-    //   );
-    // }
-
-    // return (
-    //   <>
-    //     {styleNode}
-    //     {node}
-    //   </>
-    // );
   };
 }
 

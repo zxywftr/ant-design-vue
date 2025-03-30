@@ -1,10 +1,10 @@
 import hash from '@emotion/hash';
+import type { Ref } from 'vue';
+import { computed, ref } from 'vue';
 import { ATTR_TOKEN, CSS_IN_JS_INSTANCE, useStyleInject } from '../StyleContext';
 import type Theme from '../theme/Theme';
-import useGlobalCache from './useGlobalCache';
 import { flattenToken, token2key } from '../util';
-import type { Ref } from 'vue';
-import { ref, computed } from 'vue';
+import useGlobalCache from './useGlobalCache';
 
 const EMPTY_OVERRIDE = {};
 
@@ -16,7 +16,7 @@ const isPrerender = process.env.NODE_ENV === 'prerender';
 // This helps developer not to do style override directly on the hash id.
 const hashPrefix = !isProduction && !isPrerender ? 'css-dev-only-do-not-override' : 'css';
 
-export interface Option<DerivativeToken, DesignToken> {
+interface Option<DerivativeToken, DesignToken> {
   /**
    * Generate token with salt.
    * This is used to generate different hashId even same derivative token for different version.
@@ -109,7 +109,7 @@ export const getComputedToken = <DerivativeToken = object, DesignToken = Derivat
 };
 
 /**
- * Cache theme derivative token as global shared one
+ * @description Cache theme derivative token as global shared one
  * @param theme Theme entity
  * @param tokens List of tokens, used for cache. Please do not dynamic generate object directly
  * @param option Additional config
@@ -131,7 +131,7 @@ export default function useCacheToken<DerivativeToken = object, DesignToken = De
     'token',
     computed(() => [
       option.value.salt || '',
-      theme.value.id,
+      theme.value.id + '',
       tokenStr.value,
       overrideTokenStr.value,
     ]),
